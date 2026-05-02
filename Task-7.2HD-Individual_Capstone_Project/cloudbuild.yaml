@@ -1,0 +1,36 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Login to Docker Hub'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "$$DOCKERHUB_TOKEN" | docker login -u "ashanin24x7" --password-stdin
+    secretEnv: ['DOCKERHUB_TOKEN']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build AMD64 Image'
+    args:
+      - 'buildx'
+      - 'build'
+      - '--platform'
+      - 'linux/amd64'
+      - '-t'
+      - 'ashanin24x7/deakin-resource-api:v4-cloudbuild'
+      - '--push'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'Deploy to GKE'
+    args:
+      - 'apply'
+      - '-f'
+      - 'k8s/'
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=australia-southeast1-a'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=sit737-cluster-capst'
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/locations/australia-southeast1/secrets/dockerhub-token/versions/latest
+      env: 'DOCKERHUB_TOKEN'

@@ -14,10 +14,13 @@ spec:
     spec:
       containers:
         - name: deakin-resource-api
-          image: ashanin24x7/deakin-resource-api:v2-amd64
+          image: ashanin24x7/deakin-resource-api:v3-persistent
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: api-storage
+              mountPath: /app/data
           readinessProbe:
             httpGet:
               path: /health
@@ -30,3 +33,7 @@ spec:
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 20
+      volumes:
+        - name: api-storage
+          persistentVolumeClaim:
+            claimName: deakin-resource-api-pvc

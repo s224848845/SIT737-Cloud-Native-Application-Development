@@ -1,11 +1,31 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const DATA_DIR = "/app/data";
+const VISITS_FILE = path.join(DATA_DIR, "visits.json");
+
 app.use(cors());
 app.use(express.json());
+
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function readVisits() {
+  if (!fs.existsSync(VISITS_FILE)) {
+    fs.writeFileSync(VISITS_FILE, JSON.stringify({ visits: 0 }, null, 2));
+  }
+  return JSON.parse(fs.readFileSync(VISITS_FILE, "utf8"));
+}
+
+function saveVisits(data) {
+  fs.writeFileSync(VISITS_FILE, JSON.stringify(data, null, 2));
+}
 
 const resources = [
   {
@@ -136,6 +156,18 @@ app.get("/", (req, res) => {
       background: #003f7f;
     }
 
+    .visit-box {
+      background: white;
+      padding: 18px 20px;
+      border-radius: 14px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+
+    .visit-box strong {
+      color: #003f7f;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -207,6 +239,12 @@ app.get("/", (req, res) => {
       <span class="badge">API Running</span>
     </section>
 
+    <section class="visit-box">
+      <strong>Persistent Visit Counter:</strong>
+      <span id="visitCount">Loading...</span>
+      <button onclick="loadVisits()" style="margin-left: 12px;">Update Counter</button>
+    </section>
+
     <section class="controls">
       <input type="text" id="searchInput" placeholder="Search resources, e.g. CloudDeakin, OnTrack..." />
       <button onclick="loadResources()">Refresh Resources</button>
@@ -218,7 +256,8 @@ app.get("/", (req, res) => {
       <strong>Available API Endpoints</strong><br><br>
       GET /health<br>
       GET /resources<br>
-      GET /resources/:id
+      GET /resources/:id<br>
+      GET /visits
     </section>
   </main>
 
@@ -234,6 +273,12 @@ app.get("/", (req, res) => {
       const data = await response.json();
       allResources = data.resources;
       displayResources(allResources);
+    }
+
+    async function loadVisits() {
+      const response = await fetch('/visits');
+      const data = await response.json();
+      document.getElementById('visitCount').textContent = data.visits + ' visits stored on persistent volume';
     }
 
     function displayResources(resources) {
@@ -266,6 +311,7 @@ app.get("/", (req, res) => {
     });
 
     loadResources();
+    loadVisits();
   </script>
 
 </body>
@@ -299,6 +345,17 @@ app.get("/resources/:id", (req, res) => {
   }
 
   res.json(resource);
+});
+
+app.get("/visits", (req, res) => {
+  const data = readVisits();
+  data.visits += 1;
+  saveVisits(data);
+
+  res.json({
+    message: "Persistent visit counter updated",
+    visits: data.visits
+  });
 });
 
 app.listen(PORT, () => {

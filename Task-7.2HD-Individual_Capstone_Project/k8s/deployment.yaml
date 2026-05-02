@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deakin-resource-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: deakin-resource-api
+  template:
+    metadata:
+      labels:
+        app: deakin-resource-api
+    spec:
+      containers:
+        - name: deakin-resource-api
+          image: ashanin24x7/deakin-resource-api:v2-amd64
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20

@@ -4,14 +4,20 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v6-trigger'
-      - './Task-7.2HD-Individual_Capstone_Project'
+      - 'ashanin24x7/deakin-resource-api:latest'
+      - '.'
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push Docker Image'
+    entrypoint: 'bash'
     args:
-      - 'push'
-      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v6-trigger'
+      - '-c'
+      - |
+        echo "$$DOCKER_PASSWORD" | docker login -u "$$DOCKER_USERNAME" --password-stdin
+        docker push ashanin24x7/deakin-resource-api:latest
+    secretEnv:
+      - 'DOCKER_USERNAME'
+      - 'DOCKER_PASSWORD'
 
   - name: 'gcr.io/cloud-builders/kubectl'
     id: 'Deploy to GKE'
@@ -19,10 +25,11 @@ steps:
       - 'set'
       - 'image'
       - 'deployment/deakin-resource-api'
-      - 'deakin-resource-api=australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v6-trigger'
+      - 'deakin-resource-api=ashanin24x7/deakin-resource-api:latest'
+
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=australia-southeast1-a'
       - 'CLOUDSDK_CONTAINER_CLUSTER=sit737-cluster-capstone-project'
 
 options:
-  logging: NONE
+  logging: CLOUD_LOGGING_ONLY

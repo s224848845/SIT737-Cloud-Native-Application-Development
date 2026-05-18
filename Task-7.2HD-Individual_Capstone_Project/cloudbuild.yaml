@@ -1,36 +1,26 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'Login to Docker Hub'
-    entrypoint: 'bash'
+    id: 'Build Docker Image'
     args:
-      - '-c'
-      - |
-        echo "$$DOCKERHUB_TOKEN" | docker login -u "ashanin24x7" --password-stdin
-    secretEnv: ['DOCKERHUB_TOKEN']
+      - 'build'
+      - '-t'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v5-cloudbuild'
+      - './Task-7.2HD-Individual_Capstone_Project'
 
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'Build AMD64 Image'
+    id: 'Push Docker Image'
     args:
-      - 'buildx'
-      - 'build'
-      - '--platform'
-      - 'linux/amd64'
-      - '-t'
-      - 'ashanin24x7/deakin-resource-api:v4-cloudbuild'
-      - '--push'
-      - '.'
+      - 'push'
+      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v5-cloudbuild'
 
-  - name: 'gcr.io/cloud-builders/kubectl'
+  - name: 'gcr.io/cloud-builders/gke-deploy'
     id: 'Deploy to GKE'
     args:
-      - 'apply'
-      - '-f'
-      - 'k8s/'
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=australia-southeast1-a'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=sit737-cluster-capst'
+      - 'run'
+      - '--filename=Task-7.2HD-Individual_Capstone_Project/k8s'
+      - '--image=australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v5-cloudbuild'
+      - '--location=australia-southeast1-a'
+      - '--cluster=sit737-cluster-capstone-project'
 
-availableSecrets:
-  secretManager:
-    - versionName: projects/$PROJECT_ID/locations/australia-southeast1/secrets/dockerhub-token/versions/latest
-      env: 'DOCKERHUB_TOKEN'
+options:
+  logging: CLOUD_LOGGING_ONLY

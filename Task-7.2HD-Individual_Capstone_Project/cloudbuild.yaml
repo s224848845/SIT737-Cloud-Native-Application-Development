@@ -2,25 +2,35 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Build Docker Image'
     args:
-      - 'build'
-      - '-t'
-      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v5-cloudbuild'
-      - './Task-7.2HD-Individual_Capstone_Project'
+      [
+        'build',
+        '-t',
+        'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:latest',
+        '.'
+      ]
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push Docker Image'
     args:
-      - 'push'
-      - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v5-cloudbuild'
+      [
+        'push',
+        'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:latest'
+      ]
 
-  - name: 'gcr.io/cloud-builders/gke-deploy'
+  - name: 'gcr.io/cloud-builders/kubectl'
     id: 'Deploy to GKE'
     args:
-      - 'run'
-      - '--filename=Task-7.2HD-Individual_Capstone_Project/k8s'
-      - '--image=australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v5-cloudbuild'
-      - '--location=australia-southeast1-a'
-      - '--cluster=sit737-cluster-capstone-project'
+      [
+        'apply',
+        '-f',
+        'Task-7.2HD-Individual_Capstone_Project/k8s/deployment.yaml'
+      ]
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=australia-southeast1-a'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=sit737-cluster-capstone-project'
+
+images:
+  - 'australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:latest'
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+  logging: NONE

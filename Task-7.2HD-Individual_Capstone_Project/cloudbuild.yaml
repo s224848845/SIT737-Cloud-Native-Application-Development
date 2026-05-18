@@ -29,4 +29,4 @@ steps:
       - 'CLOUDSDK_CONTAINER_CLUSTER=sit737-cluster-capstone-project'
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+  logging: NONE

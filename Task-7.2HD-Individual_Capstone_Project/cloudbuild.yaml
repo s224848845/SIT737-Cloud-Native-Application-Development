@@ -13,11 +13,8 @@ steps:
     args:
       - '-c'
       - |
-        echo "$$DOCKER_PASSWORD" | docker login -u "$$DOCKER_USERNAME" --password-stdin
+        docker login -u ashanin24x7 -p as373737as@1360Chooty
         docker push ashanin24x7/deakin-resource-api:latest
-    secretEnv:
-      - 'DOCKER_USERNAME'
-      - 'DOCKER_PASSWORD'
 
   - name: 'gcr.io/cloud-builders/kubectl'
     id: 'Deploy to GKE'

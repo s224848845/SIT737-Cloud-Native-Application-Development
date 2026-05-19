@@ -1,32 +1,47 @@
 steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'Build Docker Image'
+  - name: gcr.io/cloud-builders/docker
     args:
-      - 'build'
+      - build
       - '-t'
-      - 'ashanin24x7/deakin-resource-api:latest'
-      - '.'
-
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'Push Docker Image'
-    entrypoint: 'bash'
+      - ashanin24x7/deakin-resource-api:v14-dual
+      - '-t'
+      - >-
+        australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v14-dual
+      - ./Task-7.2HD-Individual_Capstone_Project
+    id: Build Docker Image
+  - name: gcr.io/cloud-builders/docker
     args:
       - '-c'
       - |
-        docker login -u ashanin24x7 -p as373737as@1360Chooty
-        docker push ashanin24x7/deakin-resource-api:latest
-
-  - name: 'gcr.io/cloud-builders/kubectl'
-    id: 'Deploy to GKE'
+        docker login -u "${_DOCKER_USERNAME}" -p "${_DOCKER_PASSWORD}"
+        docker push ashanin24x7/deakin-resource-api:v14-dual
+    id: Push to Docker Hub
+    entrypoint: bash
+  - name: gcr.io/cloud-builders/docker
     args:
-      - 'set'
-      - 'image'
-      - 'deployment/deakin-resource-api'
-      - 'deakin-resource-api=ashanin24x7/deakin-resource-api:latest'
-
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=australia-southeast1-a'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=sit737-cluster-capstone-project'
-
+      - '-c'
+      - >
+        docker push
+        australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v14-dual
+        || true
+    id: Attempt Push to Artifact Registry
+    entrypoint: bash
+  - name: gcr.io/cloud-builders/kubectl
+    args:
+      - '-c'
+      - >
+        kubectl set image deployment/deakin-resource-api
+        deakin-resource-api=ashanin24x7/deakin-resource-api:v14-dual || true
+    id: Attempt Deploy Docker Hub Image
+    entrypoint: bash
+  - name: gcr.io/cloud-builders/kubectl
+    args:
+      - '-c'
+      - >
+        kubectl set image deployment/deakin-resource-api
+        deakin-resource-api=australia-southeast1-docker.pkg.dev/$PROJECT_ID/deakin-capstone-224848845/deakin-resource-api:v14-dual
+        || true
+    id: Attempt Deploy Artifact Registry Image
+    entrypoint: bash
 options:
   logging: NONE
